@@ -44,8 +44,7 @@ func integer(n uint64, signed bool) string {
 		str = Digits[rem] + str
 	}
 
-	negative := signed && int64(n) < 0
-	if negative {
+	if signed && int64(n) < 0 {
 		//n = -n
 		str = "-" + str
 	}

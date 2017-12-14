@@ -1,3 +1,4 @@
+//	Take stdin as a number, output it as dozenal.
 package main
 
 import (
@@ -72,31 +73,5 @@ func main() {
 				fmt.Fprintln(os.Stderr, "Not a valid number. Integers, Fractions or Decimals only.")
 			}
 		}
-
-		/*
-			//First, assume it's a plain integer.
-			INT, t := INT.SetString(b, 0)
-			if !t {
-				//Second, assume it's a fraction.
-				RAT, t := RAT.SetString(b)
-				if !t {
-					//Third, assume it's a decimal number.
-					if strings.Index(b, ".") > -1 {
-						if nums := strings.Split(b, "."); len(nums) == 2 {
-							//Convert each side of the decimal point into a big.Int?
-						} else {
-							fmt.Fprintln(os.Stderr, "Not a valid number. Integers, Fractions or Decimals only.")
-						}
-					} else {
-						fmt.Fprintln(os.Stderr, "Not a valid number. Integers, Fractions or Decimals only.")
-						continue
-					}
-				} else {
-					fmt.Println(doz.Rat(RAT))
-				}
-			} else {
-				fmt.Println(doz.Int(INT))
-			}
-		*/
 	}
 }
