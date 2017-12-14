@@ -1,4 +1,8 @@
-//Implements a type alias for numbers that display as doudecimal numbers, when converted to strings.
+//	This package implements a set of functions useful for displaying numbers as dozenal,
+//	otherwise called duodecimal.
+//
+//	Built-in integer values can make use of Str(), while Int() and Rat() can be used for
+//	Int and Rat structs from the math/big package.
 package doz
 
 import (
