@@ -9,11 +9,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/TUSF/doz"
+	"github.com/TUSF/dozenal"
 )
 
 func main() {
-	doz.Digits = doz.AmerDigits
 	s := bufio.NewScanner(os.Stdin)
 	var INT big.Int
 	var RAT big.Rat
@@ -26,14 +25,14 @@ func main() {
 
 		if INT, t := INT.SetString(b, 0); t {
 			//First, assume it's a plain integer.
-			fmt.Println(doz.Int(INT))
+			fmt.Println(dozenal.Amer.BigInt(INT))
 
 		} else if RAT, t := RAT.SetString(b); t {
-			//Second, assume it's a fraction.
-			fmt.Println(doz.Rat(RAT))
+			//Second, assume it's a fraction. ("12/7")
+			fmt.Println(dozenal.Amer.BigRat(RAT))
 
 		} else {
-			//Third, assume it's a decimal number.
+			//Third, assume it's a decimal number. ("10.123")
 			if strings.Index(b, ".") > -1 {
 				if nums := strings.Split(b, "."); len(nums) == 2 {
 					//Convert each side of the decimal point into a big.Int?
@@ -72,7 +71,7 @@ func main() {
 							continue
 						}
 						RAT.Add(RAT, d)
-						fmt.Println(doz.Rat(RAT))
+						fmt.Println(dozenal.Amer.BigRat(RAT))
 					}
 				} else {
 					fmt.Fprintln(os.Stderr, "Not a valid number. Integers, Fractions or Decimals only.")

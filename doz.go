@@ -1,106 +1,53 @@
-//	This package implements a set of functions useful for displaying numbers as dozenal,
-//	otherwise called duodecimal.
-//
-//	Built-in integer values can make use of Str(), while Int() and Rat() can be used for
-//	Int and Rat structs from the math/big package.
-package doz
+package dozenal
 
 import (
 	"math/big"
 )
 
-//	Digits is a slice of string, instead of just a string, because Digits[10] should
-//	return a whole character; not a byte. Exported, so that anyone can modify any
-//	part of the slice for their needs. Be default, ASCIIDigits is used.
-var Digits = ASCIIDigits
-
-//	An ASCII-friendly set of Dozenal digits. Dec and El are represented using the Latin
-//	letters "X" and "E", to be compatible with most displays.
-var ASCIIDigits = []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "X", "E"}
-
-//	The set of Dozenal digits recommended by The Dozenal Society of America. Dec and El are
-//	represented using the Greek letter, Chi (Χ) and the Latin "open E". (Ɛ)
-var AmerDigits = []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "\u03A7", "\u0190"}
-
-//	The set of Dozenal digits recommended by The Dozenal Society of Great Britain . Dec and El are
-//	represented using a turned 2 (↊) and 3 (↋). These are the least supported among fonts.
-var BritDigits = []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "\u218A", "\u218B"}
-
 //Likely to be initialized a lot, so may as well reuse the same one.
 var zero *big.Int = big.NewInt(0)
 var dozen *big.Int = big.NewInt(0xC)
 
-//Formats dozenal integers.
-func integer(n uint64, signed bool) string {
+//	The ASCII formatter uses an ASCII-friendly set of Dozenal digits to be compatible with most displays.
+var ASCII Formatter = NewFormatter([]string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "X", "E"})
+
+//	The Amer formatter uses digits recommended by The Dozenal Society of America. Dec and El are
+//	represented using the Greek letter, Chi (Χ) and the Latin "open E". (Ɛ)
+var Amer Formatter = NewFormatter([]string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "\u03A7", "\u0190"})
+
+//	The Brit formatter uses digits recommended by The Dozenal Society of Great Britain . Dec and El are
+//	represented using a turned 2 (↊) and 3 (↋). These are the least supported among fonts.
+var Brit Formatter = NewFormatter([]string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "\u218A", "\u218B"})
+
+//	A formatter can be created to utilize sets of dozenal digits that are atypical. Under numeral circumstances
+//	simply using one of the default Formatters should be adequate.
+type Formatter struct {
+	//Not exported, because changing it isn't thread-safe.
+	digits []string
+}
+
+//	Create a Formatter with the desired digits to use. Slices longer than a dozen elements will be truncated.
+func NewFormatter(slice []string) Formatter {
+	// Copy the slice, but only the first 12 elements.
+	// Might cause a panic if someone decides to change the original slice while also using it.
+	n := make([]string, 0xC)
+	copy(n, slice)
+	return Formatter{digits: n}
+}
+
+//	Accepts an int64, and returns a dozenal number as a string.
+func (z Formatter) Int64(n int64) string {
 	if n == 0 {
 		return "0"
 	}
+	negative := n < 0
 	var str string
 
 	//This process is simple. Divide the integer by a dozen (0xC), and write the
 	// remainder to the string... Well, that's technically what's going on.
-	for u := n; u != 0; u /= 0xC {
-		rem := u % 0xC
-		str = Digits[rem] + str
-	}
-
-	if signed && int64(n) < 0 {
-		//n = -n
-		str = "-" + str
-	}
-	return str
-}
-
-// Converts a built-in integer value into a dozenal string.
-// Non-integer variables return a blank string.
-func Str(n interface{}) string {
-	switch v := n.(type) {
-	case int:
-		return integer(uint64(v), true)
-	case int8:
-		return integer(uint64(v), true)
-	case int16:
-		return integer(uint64(v), true)
-	case int32:
-		return integer(uint64(v), true)
-	case int64:
-		return integer(uint64(v), true)
-	case uint:
-		return integer(uint64(v), false)
-	case uint8:
-		return integer(uint64(v), false)
-	case uint16:
-		return integer(uint64(v), false)
-	case uint32:
-		return integer(uint64(v), false)
-	case uint64:
-		return integer(v, false)
-	default:
-		return ""
-	}
-}
-
-//Accepts a big.Int from the `math/big` package, and returns a dozenal integer as a string.
-func Int(i *big.Int) string {
-	//No need to waste time if it's 0. The below process kinda breaks down if it *is* 0 anyways.
-	if i.Sign() == 0 {
-		return "0"
-	}
-
-	var str string
-
-	//Don't want to modify original.
-	z := new(big.Int).Set(i)
-
-	//Save the sign. true if negative. false otherwise.
-	negative := z.Sign() == -1
-	//Absolute value to make things straight-forward.
-	z.Abs(z)
-
-	for m := new(big.Int); z.Cmp(zero) != 0; {
-		// DivMod sets `z` to the division result, and `m` to the "remainder" of the operation.
-		z.DivMod(z, dozen, m)
-		str = Digits[int(m.Int64())] + str
+	for ; n != 0; n /= 0xC {
+		rem := n % 0xC
+		str = z.digits[rem] + str
 	}
 
 	if negative {
@@ -109,25 +56,70 @@ func Int(i *big.Int) string {
 	return str
 }
 
-//Accepts a big.Rat from the `math/big` package, and returns a dozenal number as a string.
-// If the number can be represented as a whole number, the result is returned. Non-whole numbers are
-// represented by the whole number and fractional place-values delimetered by a `;`. If fractional
-// place-values are repeating, the repeating digits are surrounded in brackets.
+//	Accepts a uint64, and returns a dozenal number as a string.
+func (z Formatter) UInt64(n uint64) string {
+	if n == 0 {
+		return "0"
+	}
+	var str string
+
+	//This process is simple. Divide the integer by a dozen (0xC), and write the
+	// remainder to the string... Well, that's technically what's going on.
+	for ; n != 0; n /= 0xC {
+		rem := n % 0xC
+		str = z.digits[rem] + str
+	}
+	return str
+}
+
+//	Accepts a big.Int from the `math/big` package, and returns a dozenal integer as a string.
+func (z Formatter) BigInt(i *big.Int) string {
+	//No need to waste time if it's 0. The below process kinda breaks down if it *is* 0 anyways.
+	if i.Sign() == 0 {
+		return "0"
+	}
+
+	var str string
+
+	//Don't want to modify original.
+	d := new(big.Int).Set(i)
+
+	//Save the sign. true if negative. false otherwise.
+	negative := d.Sign() == -1
+	//Absolute value to make things straight-forward.
+	d.Abs(d)
+
+	for m := new(big.Int); d.Cmp(zero) != 0; {
+		// DivMod sets `d` to the division result, and `m` to the "remainder" of the operation.
+		d.DivMod(d, dozen, m)
+		str = z.digits[int(m.Int64())] + str
+	}
+
+	if negative {
+		str = "-" + str
+	}
+	return str
+}
+
+//	Accepts a big.Rat from the `math/big` package, and returns a dozenal number as a string.
+//	If the number can be represented as a whole number, the result is returned. Non-whole numbers are
+//	represented by the whole number and fractional place-values delimetered by a `;`. If fractional
+//	place-values are repeating, the repeating digits are surrounded in brackets.
 //
-// For example, a big.Rat representing (in Decimal) 1/12 will return as "0;1", and 1/9 as "0;14".
-// 1/10 should appear as "0;1[2497]", as the "2497" would normally repeat infinitely in dozenal.
-func Rat(i *big.Rat) string {
+//	For example, a big.Rat representing (in Decimal) 1/12 will return as "0;1", and 1/9 as "0;14".
+//	1/10 should appear as "0;1[2497]", as the "2497" would normally repeat infinitely in dozenal.
+func (z Formatter) BigRat(i *big.Rat) string {
 	//If the Denominator is 1, just return the Numerator.
 	if i.IsInt() {
-		return Int(i.Num())
+		return z.BigInt(i.Num())
 	}
 	rem := new(big.Int)
 	q := new(big.Int)
 	q.DivMod(i.Num(), i.Denom(), rem)
 
-	if rem.Cmp(big.NewInt(0)) == 0 {
+	if rem.Cmp(zero) == 0 {
 		//If Num/Denom is an integer (no remainder) return the result.
-		return Int(q)
+		return z.BigInt(q)
 	} else {
 		//Otherwise, traverse the remainder, until you find a loop.
 		var pseq []*big.Int //Sequence of place values.
@@ -146,7 +138,8 @@ func Rat(i *big.Rat) string {
 				//It terminates!
 				repeat = -1
 				break
-			} else if repeat = repeats(pseq, rseq); repeat > -1 {
+				//} else if repeat = z.repeats(pseq, rseq); repeat > -1 {
+			} else if repeat = z.repeats(rseq); repeat > -1 {
 				//It repeats!
 				// TODO
 				// This check for repitions is probably very costly.
@@ -158,12 +151,6 @@ func Rat(i *big.Rat) string {
 				pseq = pseq[:len(pseq)-1]
 				rseq = rseq[:len(rseq)-1]
 				break
-				//	} else {
-				//		//It keeps going!
-				//		if len(pseq) >= 10 { //Only up to 10 (for testing)
-				//			repeat = -1
-				//			break
-				//		}
 			}
 		}
 
@@ -172,24 +159,24 @@ func Rat(i *big.Rat) string {
 			if i == repeat {
 				frac += "["
 			}
-			frac += Int(v)
+			frac += z.BigInt(v)
 		}
 		if repeat > -1 {
 			frac += "]"
 		}
 
-		return Int(q) + ";" + frac
+		return z.BigInt(q) + ";" + frac
 	}
 }
 
-//Treats each iteration of ps and rems as pairs, and checks if the latest iteration is repeated.
-func repeats(ps, rems []*big.Int) int {
-	l := len(ps) - 1 //index of last element
-	for i := range ps {
+//	Treats each iteration of ps and rems as pairs, and checks if the latest iteration is repeated.
+func (z Formatter) repeats(rems []*big.Int) int {
+	l := len(rems) - 1 //index of last element
+	for i := range rems {
 		if i == l {
 			break
 		}
-		if ps[l].Cmp(ps[i]) == 0 && rems[l].Cmp(rems[i]) == 0 {
+		if rems[l].Cmp(rems[i]) == 0 {
 			return i
 		}
 	}

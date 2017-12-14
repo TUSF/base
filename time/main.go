@@ -1,4 +1,4 @@
-//This package displays the time using Decimal digits.
+//This package displays the time using dozenal digits.
 //
 //The format is Hour:Minute:Second:Third, on a radix of 20:50:50;50 (in or 24:60:60:60 in decimal).
 package main
@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/TUSF/doz"
+	"github.com/TUSF/dozenal"
 )
 
 const (
@@ -21,6 +21,9 @@ func main() {
 		hour, minute, second := now.Clock()
 		third := now.Nanosecond() / int(Third)
 		fmt.Printf("\r%02s:%02s:%02s;%02s",
-			doz.Str(hour), doz.Str(minute), doz.Str(second), doz.Str(third))
+			dozenal.Amer.Int64(int64(hour)),
+			dozenal.Amer.Int64(int64(minute)),
+			dozenal.Amer.Int64(int64(second)),
+			dozenal.Amer.Int64(int64(third)))
 	}
 }
