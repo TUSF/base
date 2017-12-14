@@ -135,17 +135,7 @@ func Rat(i *big.Rat) string {
 		var repeat int
 
 		//Multiply the remainder by a dozen, and then divide it by the denominator
-		//Repeat until there is no remainder, or the remainder repeats.
-
-		/*
-			//(Don't know if this is needed yet)
-			//First, confirm if there are any trailing 0s, and how many.
-			if new(big.Int).Mul(rem, dozen).Cmp(i.Denom()) == -1 {
-				//Multiply the remainder by a dozen, and if the Denominator is still too big,
-				// multiply it by a dozen until it fits
-			}
-		*/
-
+		//Repeat until there is no remainder (0), or the remainder repeats.
 		for {
 			rem.Mul(rem, dozen)
 
@@ -158,7 +148,13 @@ func Rat(i *big.Rat) string {
 				break
 			} else if repeat = repeats(pseq, rseq); repeat > -1 {
 				//It repeats!
-				//Remove the last elements.
+				// TODO
+				// This check for repitions is probably very costly.
+				// Need a better way to check for repitions.
+				// Possibly represent the place-values as a map[big.Int]big.Int,
+				//  With the remainder as the key? Not sure if it'll work...
+
+				//Remove the last elements, because it's a repition of the first digit in the loop.
 				pseq = pseq[:len(pseq)-1]
 				rseq = rseq[:len(rseq)-1]
 				break
@@ -186,7 +182,7 @@ func Rat(i *big.Rat) string {
 	}
 }
 
-//Treats each iteration of ps and rems as pairs, and checks if the last iteration is repeated.
+//Treats each iteration of ps and rems as pairs, and checks if the latest iteration is repeated.
 func repeats(ps, rems []*big.Int) int {
 	l := len(ps) - 1 //index of last element
 	for i := range ps {

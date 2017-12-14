@@ -19,7 +19,7 @@ func main() {
 	var RAT big.Rat
 
 	for s.Scan() {
-		b := s.Text()
+		b := strings.TrimSpace(s.Text())
 		if b == "quit" || b == "q" {
 			return
 		}
@@ -44,8 +44,7 @@ func main() {
 					if nums[0] == "" {
 						RAT.SetInt64(0)
 					} else {
-						RAT, t := RAT.SetString(nums[0])
-						if !t {
+						if _, err := strconv.Atoi(nums[0]); err != nil {
 							fmt.Fprintln(os.Stderr, "Not a valid number. Integers, Fractions or Decimals only.")
 							continue
 						}
@@ -54,16 +53,25 @@ func main() {
 							continue
 						}
 
-						ten := big.NewInt(10)
-						for i := 0; i < len(nums[1]); i++ {
-							d, _ := strconv.Atoi(string(nums[1][i]))
-							dn := big.NewInt(int64(d))
-							in := new(big.Int).SetInt64(int64(i + 1))
-							RAT.Add(RAT, new(big.Rat).SetFrac(dn, new(big.Int).Exp(ten, in, nil)))
-							// 1.123 = 1 + 1/10 + 2/100 + 3/1000
-							// Of course, once you convert it into dozenal, even a simple decimal like that becomes huge.
-							// "1.123" becomes 1;15[…], followed by an infinitely repeating sequence of 50+ digits
+						// 1.123 = 1 + 123/1000
+						// So, treat everything before the point as an integer
+						// then feed the number after the point, divided by the next power of 10.
+						//
+						// Of course, once you convert it into dozenal, even a simple decimal like that becomes huge.
+						// "1.123" becomes 1;15[…], followed by an infinitely repeating sequence of 50+ digits
+						RAT, t := RAT.SetString(nums[0])
+						if !t {
+							fmt.Fprintln(os.Stderr, "Not a valid number. Integers, Fractions or Decimals only.")
+							continue
 						}
+
+						d, t := new(big.Rat).SetString(
+							fmt.Sprintf("%s/1%s", nums[1], strings.Repeat("0", len(nums))))
+						if !t {
+							fmt.Fprintln(os.Stderr, "Not a valid number. Integers, Fractions or Decimals only.")
+							continue
+						}
+						RAT.Add(RAT, d)
 						fmt.Println(doz.Rat(RAT))
 					}
 				} else {
