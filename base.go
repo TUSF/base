@@ -140,7 +140,7 @@ func (z Formatter) BigRat(i *big.Rat) string {
 				//If the remainder is 0, that means we've reached the end of the answer.
 				pseq = append(pseq, new(big.Int).Set(d))
 				break
-			} else if r, ok := rseq[hash(rem.Bits())]; ok {
+			} else if r, ok := rseq[rem.String()]; ok {
 				//If the remainder has shown up in a previous division,
 				// then that means the sequence repeats.
 				//Be sure to mark when the first occurance of this remainder occurs.
@@ -151,7 +151,7 @@ func (z Formatter) BigRat(i *big.Rat) string {
 				pseq = append(pseq, new(big.Int).Set(d))
 
 				//And keep track of the remainder, and its iteration.
-				rseq[hash(rem.Bits())] = it
+				rseq[rem.String()] = it
 			}
 		}
 
@@ -168,18 +168,4 @@ func (z Formatter) BigRat(i *big.Rat) string {
 
 		return z.BigInt(q) + ";" + frac
 	}
-}
-
-//A simple hashing algotithm for converting []big.Word into a string.
-//The reason for this is simple; map keys need to have an equality operation, and slices
-// don't have that capability. Arrays like [10]big.Word might, but because big.Word can be
-// any arbitrary length (or at least as big as maxInt), it would take HUGE amounts of memory
-// to do that. So, this function converts each Word (a uint) into a rune (an int32) inside
-// a slice, and then converts the whole slice into a string.
-func hash(ws []big.Word) string {
-	rs := make([]rune, len(ws))
-	for i, v := range ws {
-		rs[i] = rune(v)
-	}
-	return string(rs)
 }

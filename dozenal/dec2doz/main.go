@@ -14,10 +14,10 @@ import (
 
 func main() {
 	s := bufio.NewScanner(os.Stdin)
-	var INT big.Int
-	var RAT big.Rat
 
 	for s.Scan() {
+		var INT big.Int
+		var RAT big.Rat
 		b := strings.TrimSpace(s.Text())
 		if b == "quit" || b == "q" {
 			return
