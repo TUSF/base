@@ -22,10 +22,11 @@ type Formatter struct {
 }
 
 //	Create a Formatter with the desired digits to use.
-//	Slices longer than the base will be truncated.
-func NewFormatter(b int, slice []string) Formatter {
+//	The base is decided by the len() of slice.
+func NewFormatter(slice []string) Formatter {
 	// Copy the slice, but only the first 12 elements.
 	// Might cause a panic if someone decides to change the original slice while also using it.
+	b := len(slice)
 	n := make([]string, b)
 	copy(n, slice)
 	return Formatter{base: b, bbase: big.NewInt(int64(b)), digits: n}

@@ -17,11 +17,9 @@
 //	If you want different numerals, such as if you have your own digits for ten and eleven
 //	in Dozenal or even if you want to map 0-9 to something unique as well, you can use NewFormatter()
 //	to create a formatter.
-//		mybase := base.NewFormatter([]string{13, "a","b","c","d","e","f","g","h","i","j","k","l","m","n"})
+//		mybase := base.NewFormatter([]string{"a","b","c","d","e","f","g","h","i","j","k","l","m"})
 //		fmt.Println(mybase.Int64(100)) // Output: "hj"
-//	Notice in this example that we chose to use 13 as a base, and yet the slice literal contains more than
-//	13 elements. In such 	a case, the NewFormatter function will truncate the slice to the length of the base,
-//	in this case ending at "m".
+//	Notice in this example that the chosen base is the len of the slice; in this case base 13.
 //
 //	Big
 //
