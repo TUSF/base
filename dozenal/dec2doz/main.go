@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/TUSF/dozenal"
+	"github.com/TUSF/base/dozenal"
 )
 
 func main() {
@@ -37,13 +37,20 @@ func main() {
 				if nums := strings.Split(b, "."); len(nums) == 2 {
 					//Convert each side of the decimal point into a big.Int?
 					if nums[1] == "" {
-						fmt.Fprintln(os.Stderr, "Not a valid number. Integers, Fractions or Decimals only.")
+						// Nothing after the point. "10." is treated as just "10"
+						if INT, t := INT.SetString(b, 0); t {
+							fmt.Println(dozenal.Amer.BigInt(INT))
+						} else {
+							fmt.Fprintln(os.Stderr, "Not a valid number. Integers, Fractions or Decimals only.")
+						}
 						continue
-					}
-					if nums[0] == "" {
-						RAT.SetInt64(0)
 					} else {
-						if _, err := strconv.Atoi(nums[0]); err != nil {
+						if nums[0] == "" {
+							// ".124" is treated as "0.124"
+							nums[0] = "0"
+
+						} else if _, err := strconv.Atoi(nums[0]); err != nil {
+							// First make sure each side of the point is actually a decimal number.
 							fmt.Fprintln(os.Stderr, "Not a valid number. Integers, Fractions or Decimals only.")
 							continue
 						}
@@ -74,9 +81,11 @@ func main() {
 						fmt.Println(dozenal.Amer.BigRat(RAT))
 					}
 				} else {
+					// More than 1 point!?
 					fmt.Fprintln(os.Stderr, "Not a valid number. Integers, Fractions or Decimals only.")
 				}
 			} else {
+				// Missing a point.
 				fmt.Fprintln(os.Stderr, "Not a valid number. Integers, Fractions or Decimals only.")
 			}
 		}

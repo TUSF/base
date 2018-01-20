@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/TUSF/dozenal"
+	"github.com/TUSF/base/dozenal"
 )
 
 const (
