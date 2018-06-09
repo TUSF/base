@@ -33,6 +33,14 @@ var hexsex base.Formatter = base.NewFormatter([]string{"0", "1", "2", "3", "4", 
 var hex base.Formatter = base.NewFormatter([]string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
 	"A", "B", "C", "D", "E", "F"})
 
+//Base 20 Vigesimal, based on Maya Glyphs
+var maya base.Formatter = base.NewFormatter([]string{
+	"\u1d2e0", "\u1d2e1", "\u1d2e2", "\u1d2e3", "\u1d2e4",
+	"\u1d2e5", "\u1d2e6", "\u1d2e7", "\u1d2e8", "\u1d2e9",
+	"\u1d2ea", "\u1d2eb", "\u1d2ec", "\u1d2ed", "\u1d2ee",
+	"\u1d2ef", "\u1d2f0", "\u1d2f1", "\u1d2f2", "\u1d2f3",
+})
+
 func main() {
 	document := dom.GetWindow().Document()
 	input := document.GetElementByID("input").(*dom.HTMLInputElement)
@@ -51,18 +59,20 @@ func main() {
 	})
 	options.AddEventListener("change", false, func(e dom.Event) {
 		switch options.Value {
+		default:
+			BAS = dozenal.ASCII
+		case "dozamer":
+			BAS = dozenal.Amer
+		case "dozbrit":
+			BAS = dozenal.Brit
 		case "sex":
 			BAS = sex
 		case "hexsex":
 			BAS = hexsex
 		case "hex":
 			BAS = hex
-		case "dozascii":
-			BAS = dozenal.ASCII
-		case "dozamer":
-			BAS = dozenal.Amer
-		case "dozbrit":
-			BAS = dozenal.Brit
+		case "maya":
+			BAS = maya
 		}
 		if input.Value != "" {
 			output.SetTextContent(Convert(input.Value))
