@@ -4,14 +4,11 @@ import (
 	"math/big"
 )
 
-//Likely to be initialized a lot, so may as well reuse the same one.
-var zero *big.Int = big.NewInt(0)
-
 //Because the "math" package doesn't have a const for MaxInt.
 //len(slice) returns an int, and slice[index] only accepts an int as an index.
 const maxInt = int((^uint(0)) >> 1)
 
-//	A formatter can be created to utilize sets of digits and bases that are atypical.
+//	Formatter can be created to utilize sets of digits and bases that are atypical.
 type Formatter struct {
 	//The base to format numbers in.
 	base  int
@@ -24,7 +21,7 @@ type Formatter struct {
 //	Create a Formatter with the desired digits to use.
 //	The base is decided by the len() of slice.
 func NewFormatter(slice []string) Formatter {
-	// Copy the slice, but only the first 12 elements.
+	// Copy the slice.
 	// Might cause a panic if someone decides to change the original slice while also using it.
 	b := len(slice)
 	n := make([]string, b)
@@ -86,7 +83,7 @@ func (z Formatter) BigInt(i *big.Int) string {
 	//Absolute value to make things straight-forward.
 	d.Abs(d)
 
-	for m := new(big.Int); d.Cmp(zero) != 0; {
+	for m := new(big.Int); d.Sign() != 0; {
 		// DivMod sets `d` to the division result, and `m` to the "remainder" of the operation.
 		d.DivMod(d, z.bbase, m)
 		str = z.digits[int(m.Int64())] + str
@@ -118,55 +115,56 @@ func (z Formatter) BigRat(i *big.Rat) string {
 	//Divide the Numerator and Denominator; the quotent goes into `q`, remainder into `rem`.
 	q.DivMod(i.Num(), i.Denom(), rem)
 
-	if rem.Cmp(zero) == 0 {
+	if rem.Sign() == 0 {
 		//If Num/Denom is an integer (no remainder) return the result.
 		return z.BigInt(q)
-	} else {
-		//Otherwise, traverse the remainder, until you find a loop.
-		var pseq []*big.Int          //Sequence of place values.
-		rseq := make(map[string]int) //Sequence of remainders (to know when a repeating patern begins)
-		var repeat int = -1
-
-		//Multiply the remainder by the base, and then divide it by the denominator
-		//Repeat until there is no remainder (0), or the remainder repeats.
-		//Stop upon hitting maxInt, so that it doesn't attenpt to go past it.
-		for it := 0; it < maxInt; it++ {
-			// Multiply the last remainder by the base.
-			rem.Mul(rem, z.bbase)
-
-			// Divide the product by the Denminator.
-			d, rem := new(big.Int).DivMod(rem, i.Denom(), rem)
-
-			if rem.Cmp(zero) == 0 {
-				//If the remainder is 0, that means we've reached the end of the answer.
-				pseq = append(pseq, new(big.Int).Set(d))
-				break
-			} else if r, ok := rseq[rem.String()]; ok {
-				//If the remainder has shown up in a previous division,
-				// then that means the sequence repeats.
-				//Be sure to mark when the first occurance of this remainder occurs.
-				repeat = r
-				break
-			} else {
-				//Otherwise, mark down the digit to be written to the string later.
-				pseq = append(pseq, new(big.Int).Set(d))
-
-				//And keep track of the remainder, and its iteration.
-				rseq[rem.String()] = it
-			}
-		}
-
-		var frac string
-		for it, v := range pseq {
-			if it == repeat {
-				frac += "["
-			}
-			frac += z.BigInt(v)
-		}
-		if repeat > -1 {
-			frac += "]"
-		}
-
-		return z.BigInt(q) + ";" + frac
 	}
+
+	//Otherwise, traverse the remainder, until you find a loop.
+	var pseq []*big.Int          //Sequence of place values.
+	rseq := make(map[string]int) //Sequence of remainders (to know when a repeating patern begins)
+	var repeat = -1
+
+	//Multiply the remainder by the base, and then divide it by the denominator
+	//Repeat until there is no remainder (0), or the remainder repeats.
+	//Stop upon hitting maxInt, so that it doesn't attenpt to go past it.
+	for it := 0; it < maxInt; it++ {
+		// Multiply the last remainder by the base.
+		rem.Mul(rem, z.bbase)
+
+		// Divide the product by the Denminator.
+		d, rem := new(big.Int).DivMod(rem, i.Denom(), rem)
+
+		if rem.Sign() == 0 {
+			//If the remainder is 0, that means we've reached the end of the answer.
+			pseq = append(pseq, new(big.Int).Set(d))
+			break
+		} else if r, ok := rseq[rem.String()]; ok {
+			//If the remainder has shown up in a previous division,
+			// then that means the sequence repeats.
+			//Be sure to mark when the first occurance of this remainder occurs.
+			repeat = r
+			break
+		} else {
+			//Otherwise, mark down the digit to be written to the string later.
+			pseq = append(pseq, new(big.Int).Set(d))
+
+			//And keep track of the remainder, and its iteration.
+			rseq[rem.String()] = it
+		}
+	}
+
+	var frac string
+	for it, v := range pseq {
+		if it == repeat {
+			frac += "["
+		}
+		frac += z.BigInt(v)
+	}
+	if repeat > -1 {
+		frac += "]"
+	}
+
+	return z.BigInt(q) + ";" + frac
+
 }
